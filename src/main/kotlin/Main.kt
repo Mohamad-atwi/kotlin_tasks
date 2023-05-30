@@ -1,18 +1,20 @@
-// use intelliJ or https://play.kotlinlang.org/
-
-// imports for task 3
 import kotlinx.coroutines.*
 import kotlin.system.measureTimeMillis
 
 fun main() {
-    // you can run your functions here
-
+    task1()
+        val option: Option<String> = "Hello".toOption()
+    when (option) {
+        is Option.None -> println("Option is None")
+        is Option.Some -> println("Option is Some: ${option.value}")
+    }
+    task3()
 }
 
 // Task 1
 fun task1() {
     val sentences = arrayOf(
-        "Taki mamy klimat",
+       "Taki mamy klimat",
         "Wszędzie dobrze ale w domu najlepiej",
         "Wyskoczył jak Filip z konopii",
         "Gdzie kucharek sześć tam nie ma co jeść",
@@ -30,34 +32,49 @@ fun task1() {
         "Nie powinno sprawić żadnego problemu, bo Google jest dozwolony"
     )
 
-    /* TODO Your task is to print to the console the three most common words in the 'sentences' list,
-        along with the number of times they occur
+    val wordCountMap = mutableMapOf<String, Int>()
 
-            Sample output:
-            1. "mam" - 12
-            2. "tak" - 5
-            3. "z" - 2
-    */
+    sentences.flatMap { it.split(" ") }
+        .forEach { word ->
+            val lowercaseWord = word.toLowerCase()
+            wordCountMap[lowercaseWord] = wordCountMap.getOrDefault(lowercaseWord, 0) + 1
+        }
 
-    println("Hello World!")
+    val mostCommonWords = wordCountMap.entries
+        .sortedByDescending { it.value }
+        .take(3)
+
+    println("The three most common words:")
+    mostCommonWords.forEachIndexed { index, (word, count) ->
+        println("${index + 1}. \"$word\" - $count")
+    }
 }
 
-// task 2 - Implement functions marked as TODO. After you implement them, use them in main function.
+// Task 2
 sealed class Option<out T> {
     object None : Option<Nothing>()
     data class Some<T>(val value: T) : Option<T>()
 
-    fun toNullable(): T? =  TODO("This function should return the value if option is Some, or null if option is None")
+    fun toNullable(): T? = when (this) {
+        is Some -> value
+        is None -> null
+    }
 }
 
-fun <T : Any?> T?.toOption(): Option<T> = TODO("This functon should check if the value is null, and return None if it is, or Some(value) if it is not")
+fun <T : Any?> T?.toOption(): Option<T> = if (this != null) {
+    Option.Some(this)
+} else {
+    Option.None
+}
 
-// task 3
+// Task 3
 fun task3() =
     measureTimeMillis {
         runBlocking {
-            // TODO - Change the code below so it runs in less than 2 seconds
-            println(waitAndGetNumber() + waitAndGetNumber())
+            val deferredResult1 = async { waitAndGetNumber() }
+            val deferredResult2 = async { waitAndGetNumber() }
+            val sum = deferredResult1.await() + deferredResult2.await()
+            println(sum)
         }
     }.also { time ->
         check(time > 1000) { "It runs too quickly - it's not possible" }
@@ -65,7 +82,7 @@ fun task3() =
         print("Time: $time")
     }
 
-// don't change this function
+// Don't change this function
 suspend fun waitAndGetNumber(): Int {
     delay(1000)
     return (1..10).random()
